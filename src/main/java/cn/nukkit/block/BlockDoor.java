@@ -9,12 +9,13 @@ import cn.nukkit.level.Sound;
 import cn.nukkit.math.AxisAlignedBB;
 import cn.nukkit.math.BlockFace;
 import cn.nukkit.math.SimpleAxisAlignedBB;
+import cn.nukkit.utils.Faceable;
 
 /**
  * author: MagicDroidX
  * Nukkit Project
  */
-public abstract class BlockDoor extends BlockTransparentMeta {
+public abstract class BlockDoor extends BlockTransparentMeta implements Faceable {
 
     protected BlockDoor(int meta) {
         super(meta);
@@ -218,7 +219,7 @@ public abstract class BlockDoor extends BlockTransparentMeta {
         }
 
         if (type == Level.BLOCK_UPDATE_REDSTONE) {
-            if ((!isOpen() && this.level.isBlockPowered(this)) || (isOpen() && !this.level.isBlockPowered(this))) {
+            if ((!isOpen() && this.level.isBlockPowered(this.getLocation())) || (isOpen() && !this.level.isBlockPowered(this.getLocation()))) {
                 this.level.getServer().getPluginManager().callEvent(new BlockRedstoneEvent(this, isOpen() ? 15 : 0, isOpen() ? 0 : 15));
 
                 this.toggle(null);
@@ -229,12 +230,8 @@ public abstract class BlockDoor extends BlockTransparentMeta {
     }
 
     @Override
-    public boolean place(Item item, Block block, Block target, BlockFace face, double fx, double fy, double fz) {
-        return this.place(item, block, target, face, fx, fy, fz, null);
-    }
-
-    @Override
     public boolean place(Item item, Block block, Block target, BlockFace face, double fx, double fy, double fz, Player player) {
+        if (this.y > 254) return false;
         if (face == BlockFace.UP) {
             Block blockUp = this.up();
             Block blockDown = this.down();
@@ -255,7 +252,7 @@ public abstract class BlockDoor extends BlockTransparentMeta {
             this.getLevel().setBlock(block, this, true, true); //Bottom
             this.getLevel().setBlock(blockUp, Block.get(this.getId(), metaUp), true); //Top
 
-            if (!this.isOpen() && this.level.isBlockPowered(this)) {
+            if (!this.isOpen() && this.level.isBlockPowered(this.getLocation())) {
                 this.toggle(null);
             }
             return true;
@@ -334,5 +331,10 @@ public abstract class BlockDoor extends BlockTransparentMeta {
 
     public boolean isTop(int meta) {
         return (meta & 8) != 0;
+    }
+
+    @Override
+    public BlockFace getBlockFace() {
+        return BlockFace.fromHorizontalIndex(this.getDamage() & 0x07);
     }
 }

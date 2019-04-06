@@ -4,6 +4,7 @@ import cn.nukkit.entity.data.Skin;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
+import lombok.ToString;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
@@ -15,6 +16,7 @@ import java.util.UUID;
 /**
  * Created by on 15-10-13.
  */
+@ToString
 public class LoginPacket extends DataPacket {
 
     public static final byte NETWORK_ID = ProtocolInfo.LOGIN_PACKET;
@@ -23,12 +25,7 @@ public class LoginPacket extends DataPacket {
     public int protocol;
     public UUID clientUUID;
     public long clientId;
-
     public Skin skin;
-    public String skinGeometryName;
-    public byte[] skinGeometry;
-
-    public byte[] capeData;
 
     @Override
     public byte pid() {
@@ -38,10 +35,9 @@ public class LoginPacket extends DataPacket {
     @Override
     public void decode() {
         this.protocol = this.getInt();
-        if (protocol >= 0xffff) {
-            this.offset -= 6;
-            this.protocol = this.getInt();
-            this.offset += 1;
+        if (protocol == 0) {
+            setOffset(getOffset() + 2);
+            this.protocol = getInt();
         }
         this.setBuffer(this.getByteArray(), 0);
         decodeChainData();
@@ -76,29 +72,31 @@ public class LoginPacket extends DataPacket {
 
     private void decodeSkinData() {
         JsonObject skinToken = decodeToken(new String(this.get(this.getLInt())));
-        String skinId = null;
         if (skinToken.has("ClientRandomId")) this.clientId = skinToken.get("ClientRandomId").getAsLong();
-        if (skinToken.has("SkinId")) skinId = skinToken.get("SkinId").getAsString();
+        skin = new Skin();
+        if (skinToken.has("SkinId")) {
+            skin.setSkinId(skinToken.get("SkinId").getAsString());
+        }
         if (skinToken.has("SkinData")) {
-            this.skin = new Skin(skinToken.get("SkinData").getAsString(), skinId);
-
-            if (skinToken.has("CapeData"))
-                this.skin.setCape(this.skin.new Cape(Base64.getDecoder().decode(skinToken.get("CapeData").getAsString())));
+            skin.setSkinData(Base64.getDecoder().decode(skinToken.get("SkinData").getAsString()));
         }
 
-        if (skinToken.has("SkinGeometryName")) this.skinGeometryName = skinToken.get("SkinGeometryName").getAsString();
-        if (skinToken.has("SkinGeometry"))
-            this.skinGeometry = Base64.getDecoder().decode(skinToken.get("SkinGeometry").getAsString());
+        if (skinToken.has("CapeData")) {
+            this.skin.setCapeData(Base64.getDecoder().decode(skinToken.get("CapeData").getAsString()));
+        }
+
+        if (skinToken.has("SkinGeometryName")) {
+            skin.setGeometryName(skinToken.get("SkinGeometryName").getAsString());
+        }
+
+        if (skinToken.has("SkinGeometry")) {
+            skin.setGeometryData(new String(Base64.getDecoder().decode(skinToken.get("SkinGeometry").getAsString()), StandardCharsets.UTF_8));
+        }
     }
 
     private JsonObject decodeToken(String token) {
         String[] base = token.split("\\.");
         if (base.length < 2) return null;
         return new Gson().fromJson(new String(Base64.getDecoder().decode(base[1]), StandardCharsets.UTF_8), JsonObject.class);
-    }
-
-    @Override
-    public Skin getSkin() {
-        return this.skin;
     }
 }

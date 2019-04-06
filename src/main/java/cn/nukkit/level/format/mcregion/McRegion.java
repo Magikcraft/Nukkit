@@ -12,9 +12,9 @@ import cn.nukkit.level.generator.Generator;
 import cn.nukkit.nbt.NBTIO;
 import cn.nukkit.nbt.tag.CompoundTag;
 import cn.nukkit.scheduler.AsyncTask;
-import cn.nukkit.utils.Binary;
 import cn.nukkit.utils.BinaryStream;
 import cn.nukkit.utils.ChunkException;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -75,7 +75,7 @@ public class McRegion extends BaseLevelProvider {
                 .putLong("DayTime", 0)
                 .putInt("GameType", 0)
                 .putString("generatorName", Generator.getGeneratorName(generator))
-                .putString("generatorOptions", options.containsKey("preset") ? options.get("preset") : "")
+                .putString("generatorOptions", options.getOrDefault("preset", ""))
                 .putInt("generatorVersion", 1)
                 .putBoolean("hardcore", false)
                 .putBoolean("initialized", true)
@@ -179,6 +179,7 @@ public class McRegion extends BaseLevelProvider {
         return chunk;
     }
 
+    @Override
     public Chunk getEmptyChunk(int chunkX, int chunkZ) {
         return Chunk.getEmptyChunk(chunkX, chunkZ, this);
     }
@@ -213,18 +214,19 @@ public class McRegion extends BaseLevelProvider {
     }
 
     protected BaseRegionLoader loadRegion(int x, int z) {
-        BaseRegionLoader tmp = lastRegion;
+        BaseRegionLoader tmp = lastRegion.get();
         if (tmp != null && x == tmp.getX() && z == tmp.getZ()) {
             return tmp;
         }
         long index = Level.chunkHash(x, z);
-        BaseRegionLoader region = this.regions.get(index);
-        if (region == null) {
-            region = new RegionLoader(this, x, z);
-            this.regions.put(index, region);
-            return lastRegion = region;
-        } else {
-            return lastRegion = region;
+        synchronized (regions) {
+            BaseRegionLoader region = this.regions.get(index);
+            if (region == null) {
+                region = new RegionLoader(this, x, z);
+                this.regions.put(index, region);
+            }
+            lastRegion.set(region);
+            return region;
         }
     }
 }

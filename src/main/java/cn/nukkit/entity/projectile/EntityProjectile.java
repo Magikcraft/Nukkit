@@ -3,6 +3,7 @@ package cn.nukkit.entity.projectile;
 import cn.nukkit.entity.Entity;
 import cn.nukkit.entity.EntityLiving;
 import cn.nukkit.entity.data.LongEntityData;
+import cn.nukkit.entity.item.EntityEndCrystal;
 import cn.nukkit.event.entity.*;
 import cn.nukkit.event.entity.EntityDamageEvent.DamageCause;
 import cn.nukkit.level.MovingObjectPosition;
@@ -31,6 +32,8 @@ public abstract class EntityProjectile extends Entity {
     }
 
     public boolean hadCollision = false;
+
+    public boolean closeOnCollide = true;
 
     protected double damage = 0;
 
@@ -74,7 +77,9 @@ public abstract class EntityProjectile extends Entity {
                 entity.setOnFire(event.getDuration());
             }
         }
-        this.close();
+        if (closeOnCollide) {
+            this.close();
+        }
     }
 
     @Override
@@ -90,7 +95,7 @@ public abstract class EntityProjectile extends Entity {
 
     @Override
     public boolean canCollideWith(Entity entity) {
-        return entity instanceof EntityLiving && !this.onGround;
+        return (entity instanceof EntityLiving || entity instanceof EntityEndCrystal) && !this.onGround;
     }
 
     @Override

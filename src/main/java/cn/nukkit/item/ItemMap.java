@@ -6,7 +6,7 @@ import cn.nukkit.network.protocol.ClientboundMapItemDataPacket;
 import cn.nukkit.utils.MainLogger;
 
 import javax.imageio.ImageIO;
-import java.awt.*;
+import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -33,7 +33,7 @@ public class ItemMap extends Item {
 
         if (!hasCompoundTag() || !getNamedTag().contains("map_uuid")) {
             CompoundTag tag = new CompoundTag();
-            tag.putString("map_uuid", "" + mapCount++);
+            tag.putLong("map_uuid", mapCount++);
             this.setNamedTag(tag);
         }
     }
@@ -74,7 +74,7 @@ public class ItemMap extends Item {
     }
 
     public long getMapId() {
-        return Long.valueOf(getNamedTag().getString("map_uuid"));
+        return getNamedTag().getLong("map_uuid");
     }
 
     public void sendImage(Player p) {

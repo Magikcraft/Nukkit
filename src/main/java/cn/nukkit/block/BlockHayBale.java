@@ -4,14 +4,20 @@ import cn.nukkit.Player;
 import cn.nukkit.item.Item;
 import cn.nukkit.math.BlockFace;
 import cn.nukkit.utils.BlockColor;
+import cn.nukkit.utils.Faceable;
 
 /**
  * Created on 2015/11/24 by xtypr.
  * Package cn.nukkit.block in project Nukkit .
  */
-public class BlockHayBale extends BlockSolid {
+public class BlockHayBale extends BlockSolidMeta implements Faceable {
     public BlockHayBale() {
+        this(0);
     }
+
+    public BlockHayBale(int meta) {
+        super(meta);
+     }
 
     @Override
     public int getId() {
@@ -62,5 +68,10 @@ public class BlockHayBale extends BlockSolid {
     @Override
     public BlockColor getColor() {
         return BlockColor.GRASS_BLOCK_COLOR;
+    }
+
+    @Override
+    public BlockFace getBlockFace() {
+        return BlockFace.fromHorizontalIndex(this.getDamage() & 0x07);
     }
 }

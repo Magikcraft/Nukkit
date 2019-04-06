@@ -7,8 +7,7 @@ import cn.nukkit.level.format.FullChunk;
 import cn.nukkit.nbt.tag.CompoundTag;
 import cn.nukkit.utils.TextFormat;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
 import java.util.Objects;
 
 /**
@@ -17,14 +16,17 @@ import java.util.Objects;
  */
 public class BlockEntitySign extends BlockEntitySpawnable {
 
+    private String[] text;
+
     public BlockEntitySign(FullChunk chunk, CompoundTag nbt) {
         super(chunk, nbt);
     }
 
     @Override
     protected void initBlockEntity() {
+        text = new String[4];
+
         if (!namedTag.contains("Text")) {
-            List<String> lines = new ArrayList<>();
 
             for (int i = 1; i <= 4; i++) {
                 String key = "Text" + i;
@@ -32,13 +34,20 @@ public class BlockEntitySign extends BlockEntitySpawnable {
                 if (namedTag.contains(key)) {
                     String line = namedTag.getString(key);
 
-                    lines.add(line);
+                    this.text[i - 1] = line;
 
-                    namedTag.remove(key);
+                    this.namedTag.remove(key);
                 }
             }
+        } else {
+            String[] lines = namedTag.getString("Text").split("\n", 4);
 
-            namedTag.putString("Text", String.join("\n", lines));
+            for (int i = 0; i < text.length; i++) {
+                if (i < lines.length)
+                    text[i] = lines[i];
+                else
+                    text[i] = "";
+            }
         }
 
         super.initBlockEntity();
@@ -57,18 +66,25 @@ public class BlockEntitySign extends BlockEntitySpawnable {
     }
 
     public boolean setText(String... lines) {
-        this.namedTag.putString("Text", String.join("\n", lines));
+        for (int i = 0; i < text.length; i++) {
+            if (i < lines.length)
+                text[i] = lines[i];
+            else
+                text[i] = "";
+        }
+
+        this.namedTag.putString("Text", String.join("\n", text));
         this.spawnToAll();
 
         if (this.chunk != null) {
-            this.chunk.setChanged();
+            setDirty();
         }
 
         return true;
     }
 
     public String[] getText() {
-        return this.namedTag.getString("Text").split("\n");
+        return text;
     }
 
     @Override
@@ -76,17 +92,20 @@ public class BlockEntitySign extends BlockEntitySpawnable {
         if (!nbt.getString("id").equals(BlockEntity.SIGN)) {
             return false;
         }
-        String[] text = nbt.getString("Text").split("\n", 4);
+        String[] lines = new String[4];
+        Arrays.fill(lines, "");
+        String[] splitLines = nbt.getString("Text").split("\n", 4);
+        System.arraycopy(splitLines, 0, lines, 0, splitLines.length);
 
-        SignChangeEvent signChangeEvent = new SignChangeEvent(this.getBlock(), player, text);
+        SignChangeEvent signChangeEvent = new SignChangeEvent(this.getBlock(), player, lines);
 
         if (!this.namedTag.contains("Creator") || !Objects.equals(player.getUniqueId().toString(), this.namedTag.getString("Creator"))) {
             signChangeEvent.setCancelled();
         }
 
         if (player.getRemoveFormat()) {
-            for (int i = 0; i < text.length; i++) {
-                text[i] = TextFormat.clean(text[i]);
+            for (int i = 0; i < lines.length; i++) {
+                lines[i] = TextFormat.clean(lines[i]);
             }
         }
 

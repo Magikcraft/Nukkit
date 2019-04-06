@@ -1,11 +1,13 @@
 package cn.nukkit.network.protocol;
 
 import cn.nukkit.math.Vector3;
+import lombok.ToString;
 
 /**
  * author: MagicDroidX
  * Nukkit Project
  */
+@ToString
 public class ExplodePacket extends DataPacket {
 
     public static final byte NETWORK_ID = ProtocolInfo.EXPLODE_PACKET;
@@ -40,7 +42,7 @@ public class ExplodePacket extends DataPacket {
         this.putUnsignedVarInt(this.records.length);
         if (this.records.length > 0) {
             for (Vector3 record : records) {
-                this.putBlockVector3((int) record.x, (int) record.y, (int) record.z);
+                this.putSignedBlockPosition(record.asBlockVector3());
             }
         }
     }

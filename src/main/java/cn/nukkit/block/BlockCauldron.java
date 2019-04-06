@@ -10,6 +10,7 @@ import cn.nukkit.level.Sound;
 import cn.nukkit.math.BlockFace;
 import cn.nukkit.nbt.tag.CompoundTag;
 import cn.nukkit.nbt.tag.Tag;
+import cn.nukkit.network.protocol.LevelSoundEventPacket;
 
 import java.util.Map;
 
@@ -121,7 +122,7 @@ public class BlockCauldron extends BlockSolidMeta {
                             this.setDamage(6);//fill
                             cauldron.clearCustomColor();
                             this.level.setBlock(this, this, true);
-                            this.level.addSound(this.add(0.5, 1, 0.5), Sound.BUCKET_FILL_WATER);
+                            this.getLevel().addLevelSoundEvent(this.add(0.5, 1, 0.5), LevelSoundEventPacket.SOUND_BUCKET_FILL_WATER);
                         }
                         //this.update();
                     }
@@ -194,7 +195,7 @@ public class BlockCauldron extends BlockSolidMeta {
     @Override
     public boolean place(Item item, Block block, Block target, BlockFace face, double fx, double fy, double fz, Player player) {
         CompoundTag nbt = new CompoundTag("")
-                .putString("id", BlockEntity.CHEST)
+                .putString("id", BlockEntity.CAULDRON)
                 .putInt("x", (int) this.x)
                 .putInt("y", (int) this.y)
                 .putInt("z", (int) this.z)
